@@ -1,68 +1,86 @@
 /*
-  🚀 ULTRASONIC SENSOR – PRECISION TEST CODE (Top 1%)
-  Components:
-    - Arduino Uno / Nano
-    - HC-SR04 Ultrasonic Sensor
+  🚀 Ultrasonic Sensor (HC-SR04) - Precision Measurement Module
+
   Features:
-    ✅ Floating-point distance measurement
-    ✅ Noise-free readings using averaging
-    ✅ Elegant, aligned Serial output
-    ✅ Auto-status message when out of range
+  - Averaged readings for noise reduction
+  - Timeout protection
+  - Configurable sample size
+  - Clean and reusable function design
+
+  Author: Venkateswarlu Reddy
 */
 
 #define TRIG_PIN 6
 #define ECHO_PIN 7
 
-float getDistanceCM();  // Function prototype
+#define MAX_DISTANCE 400.0   // cm
+#define MIN_DISTANCE 2.0     // cm
+#define SAMPLES 5            // Number of readings for averaging
+#define TIMEOUT_US 25000     // 25ms timeout (~4m max range)
+
+float readDistanceCM();
 
 void setup() {
   Serial.begin(9600);
+  
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
-  
-  Serial.println(F("==================================="));
-  Serial.println(F("   HC-SR04 ULTRASONIC SENSOR TEST   "));
-  Serial.println(F("==================================="));
-  Serial.println(F("Place an object in front of sensor..."));
-  Serial.println(F("Distance will be shown in centimeters"));
-  Serial.println(F("-----------------------------------\n"));
-  delay(2000);
+
+  Serial.println(F("\n===================================="));
+  Serial.println(F(" HC-SR04 PRECISION TEST MODULE "));
+  Serial.println(F("===================================="));
+  Serial.println(F("Initializing sensor...\n"));
+
+  delay(1500);
 }
 
 void loop() {
-  float distance = getDistanceCM();
-  
-  if (distance > 0 && distance < 400) {  // Valid range of HC-SR04
+  float distance = readDistanceCM();
+
+  if (distance >= MIN_DISTANCE && distance <= MAX_DISTANCE) {
     Serial.print(F("Distance: "));
-    Serial.print(distance, 2);  // Show 2 decimal places
+    Serial.print(distance, 2);
     Serial.println(F(" cm"));
   } else {
-    Serial.println(F("⚠️  Out of Range"));
+    Serial.println(F("⚠️ Invalid / Out of Range"));
   }
 
-  delay(500);
+  delay(400);
 }
 
-// Function to get stable distance reading
-float getDistanceCM() {
+// 📏 Reads distance with averaging and validation
+float readDistanceCM() {
   float total = 0;
-  int samples = 5; // Take 5 samples for stable average
+  int validSamples = 0;
 
-  for (int i = 0; i < samples; i++) {
+  for (int i = 0; i < SAMPLES; i++) {
+
+    // Trigger pulse
     digitalWrite(TRIG_PIN, LOW);
     delayMicroseconds(2);
-    
+
     digitalWrite(TRIG_PIN, HIGH);
     delayMicroseconds(10);
     digitalWrite(TRIG_PIN, LOW);
 
-    long duration = pulseIn(ECHO_PIN, HIGH, 25000); // Timeout 25ms (~4m max)
-    
-    // Convert duration to distance (speed of sound = 343 m/s)
+    long duration = pulseIn(ECHO_PIN, HIGH, TIMEOUT_US);
+
+    // If no signal received, skip this sample
+    if (duration == 0) continue;
+
     float distance = duration * 0.0343 / 2.0;
-    total += distance;
+
+    // Validate reading
+    if (distance >= MIN_DISTANCE && distance <= MAX_DISTANCE) {
+      total += distance;
+      validSamples++;
+    }
+
     delay(10);
   }
 
-  return total / samples;  // Average of all samples
+  // If no valid samples, return -1
+  if (validSamples == 0) return -1;
+
+  return total / validSamples;
 }
