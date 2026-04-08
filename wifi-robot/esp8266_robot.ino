@@ -1,128 +1,159 @@
 /*
-  🚀 WiFi Controlled Robot (ESP8266)
+  🚀 WiFi Controlled Robot (Stable + Professional Version)
 
   Features:
-  - Mobile app control (MIT App Inventor)
-  - Clean command handling
-  - Modular motor control
-  - Expandable architecture
+  - Clean motor abstraction
+  - Safe speed handling
+  - Maintain original behavior (no auto stop issue)
+  - Scalable architecture
 
   Author: Venkateswarlu Reddy
 */
 
 #include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
 
-// -------- WIFI CREDENTIALS --------
-const char* ssid = "YOUR_WIFI_NAME";
-const char* password = "YOUR_PASSWORD";
+// ---------------- WIFI ----------------
+const char* ssid = "YOUR WIFI NAME";
+const char* password = "YOUR WIFI PASSWORD";
 
-WiFiServer server(80);
+ESP8266WebServer server(80);
 
-// -------- MOTOR PINS --------
+// ---------------- MOTOR PINS ----------------
 #define IN1 D1
 #define IN2 D2
-#define IN3 D3
-#define IN4 D4
+#define IN3 D5
+#define IN4 D6
+#define ENA D7
+#define ENB D8
 
-// -------- FUNCTION DECLARATIONS --------
-void stopRobot();
+#define MAX_PWM 1023
+
+int speedValue = 1023;
+
+// ---------------- FUNCTION DECLARATIONS ----------------
 void moveForward();
 void moveBackward();
 void turnLeft();
 void turnRight();
-void handleCommand(String cmd);
+void stopRobot();
+void setSpeed();
+void setMotor(int in1, int in2, bool direction);
 
-// -------- SETUP --------
+// ---------------- SETUP ----------------
 void setup() {
-  Serial.begin(9600);
+
+  Serial.begin(115200);
 
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
+  pinMode(ENA, OUTPUT);
+  pinMode(ENB, OUTPUT);
 
-  stopRobot();
+  analogWriteRange(MAX_PWM);
 
-  WiFi.begin(ssid, password);
+  analogWrite(ENA, speedValue);
+  analogWrite(ENB, speedValue);
 
-  Serial.print("Connecting to WiFi");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
+  WiFi.softAP(ssid, password);
+  WiFi.setSleepMode(WIFI_NONE_SLEEP);
 
-  Serial.println("\nConnected!");
-  Serial.println(WiFi.localIP());
+  Serial.print("Robot IP: ");
+  Serial.println(WiFi.softAPIP());
+
+  // API routes
+  server.on("/forward", moveForward);
+  server.on("/back", moveBackward);
+  server.on("/left", turnLeft);
+  server.on("/right", turnRight);
+  server.on("/stop", stopRobot);
+  server.on("/speed", setSpeed);
 
   server.begin();
+
+  Serial.println("🚀 Robot Server Ready");
 }
 
-// -------- LOOP --------
+// ---------------- LOOP ----------------
 void loop() {
-  WiFiClient client = server.available();
-  if (!client) return;
-
-  String request = client.readStringUntil('\r');
-  client.flush();
-
-  Serial.println(request);
-
-  // Extract command
-  if (request.indexOf("/forward") != -1) handleCommand("F");
-  else if (request.indexOf("/back") != -1) handleCommand("B");
-  else if (request.indexOf("/left") != -1) handleCommand("L");
-  else if (request.indexOf("/right") != -1) handleCommand("R");
-  else if (request.indexOf("/stop") != -1) handleCommand("S");
-
-  client.println("HTTP/1.1 200 OK");
-  client.println("Content-Type: text/plain");
-  client.println("Connection: close");
-  client.println();
-  client.println("OK");
+  server.handleClient();
 }
 
-// -------- COMMAND HANDLER --------
-void handleCommand(String cmd) {
-  if (cmd == "F") moveForward();
-  else if (cmd == "B") moveBackward();
-  else if (cmd == "L") turnLeft();
-  else if (cmd == "R") turnRight();
-  else if (cmd == "S") stopRobot();
+// ---------------- MOTOR CONTROL ----------------
+
+// Generic motor control (reusable)
+void setMotor(int in1, int in2, bool forward) {
+  digitalWrite(in1, forward);
+  digitalWrite(in2, !forward);
 }
 
-// -------- MOTOR FUNCTIONS --------
+// ---------------- MOVEMENT ----------------
 
 void moveForward() {
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
+  Serial.println("Forward");
+
+  setMotor(IN1, IN2, true);
+  setMotor(IN3, IN4, true);
+
+  server.send(200, "text/plain", "OK");
 }
 
 void moveBackward() {
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
-  digitalWrite(IN3, LOW);
-  digitalWrite(IN4, HIGH);
+  Serial.println("Backward");
+
+  setMotor(IN1, IN2, false);
+  setMotor(IN3, IN4, false);
+
+  server.send(200, "text/plain", "OK");
 }
 
 void turnLeft() {
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
+  Serial.println("Left");
+
+  setMotor(IN1, IN2, false);
+  setMotor(IN3, IN4, true);
+
+  server.send(200, "text/plain", "OK");
 }
 
 void turnRight() {
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, LOW);
-  digitalWrite(IN4, HIGH);
+  Serial.println("Right");
+
+  setMotor(IN1, IN2, true);
+  setMotor(IN3, IN4, false);
+
+  server.send(200, "text/plain", "OK");
 }
 
 void stopRobot() {
+  Serial.println("Stop");
+
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, LOW);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, LOW);
+
+  server.send(200, "text/plain", "OK");
+}
+
+// ---------------- SPEED CONTROL ----------------
+
+void setSpeed() {
+
+  int sliderValue = server.arg("value").toInt();
+
+  // Safety constrain
+  sliderValue = constrain(sliderValue, 0, 255);
+
+  speedValue = map(sliderValue, 0, 255, 0, MAX_PWM);
+
+  analogWrite(ENA, speedValue);
+  analogWrite(ENB, speedValue);
+
+  Serial.print("Speed PWM: ");
+  Serial.println(speedValue);
+
+  server.send(200, "text/plain", "OK");
 }
