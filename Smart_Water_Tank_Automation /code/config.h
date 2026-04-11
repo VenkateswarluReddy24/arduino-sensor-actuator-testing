@@ -1,0 +1,6 @@
+#define BLYNK_TEMPLATE_ID "YOUR_ID"
+#define BLYNK_TEMPLATE_NAME "YOUR_NAME"
+#define BLYNK_AUTH_TOKEN "YOUR_TOKEN"
+
+const char* WIFI_SSID = "YOUR_WIFI";
+const char* WIFI_PASS = "YOUR_PASS";
