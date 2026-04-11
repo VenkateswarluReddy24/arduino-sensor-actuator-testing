@@ -1,0 +1,67 @@
+import processing.serial.*;
+
+Serial myPort;
+
+String data = "";
+float angle = 0;
+float distance = 0;
+
+void setup() {
+  size(900, 600);
+  smooth();
+
+  myPort = new Serial(this, "COM6", 9600); // CHANGE COM PORT
+  myPort.bufferUntil('.');
+}
+
+void draw() {
+  fill(0, 10);
+  noStroke();
+  rect(0, 0, width, height);
+
+  translate(width/2, height);
+  drawRadar();
+  drawLine();
+  drawObject();
+}
+
+void serialEvent(Serial myPort) {
+  data = myPort.readStringUntil('.');
+  if (data != null) {
+    data = data.substring(0, data.length()-1);
+    int index = data.indexOf(",");
+    angle = float(data.substring(0, index));
+    distance = float(data.substring(index + 1));
+  }
+}
+
+void drawRadar() {
+  stroke(0, 255, 0);
+  noFill();
+
+  arc(0, 0, 800, 800, PI, TWO_PI);
+  arc(0, 0, 600, 600, PI, TWO_PI);
+  arc(0, 0, 400, 400, PI, TWO_PI);
+  arc(0, 0, 200, 200, PI, TWO_PI);
+
+  for (int i = 0; i <= 180; i += 30) {
+    float angleRad = radians(i);
+    line(0, 0, -400*cos(angleRad), -400*sin(angleRad));
+  }
+}
+
+void drawLine() {
+  stroke(0, 255, 0);
+  float angleRad = radians(angle);
+  line(0, 0, -400*cos(angleRad), -400*sin(angleRad));
+}
+
+void drawObject() {
+  if (distance < 200) {
+    stroke(255, 0, 0);
+    float angleRad = radians(angle);
+    float pixDist = map(distance, 0, 200, 0, 400);
+    line(-pixDist*cos(angleRad), -pixDist*sin(angleRad),
+         -400*cos(angleRad), -400*sin(angleRad));
+  }
+}
