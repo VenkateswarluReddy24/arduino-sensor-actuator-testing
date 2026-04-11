@@ -142,3 +142,11 @@ Can be integrated with:
 
 ## 👨‍💻 Author
 Venkateswarlu Reddy Bakka
+---
+
+## ⭐ Project Highlights
+
+✔ Voice + IoT integration  
+✔ Real-world smart home system  
+✔ Cloud communication architecture  
+✔ Industry-relevant implementation  
