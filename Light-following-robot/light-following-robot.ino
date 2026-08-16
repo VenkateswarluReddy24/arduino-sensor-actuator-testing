@@ -1,128 +1,414 @@
 /*
-  🤖 Digital PID Light Following Robot (Top 1%)
+   ============================================================
+              4-WHEEL DIGITAL LIGHT FOLLOWER
+   ============================================================
 
-  Features:
-  - LM393 digital light sensing
-  - PID-based smooth correction
-  - Stable motor control
-  - Proper edge-case handling
+   Arduino UNO
+   LM393 Light Sensors
+   L298N Motor Driver
+   4-Wheel Differential Drive
 
-  Author: Venkateswarlu Reddy
+   SENSOR:
+   LEFT  -> D12
+   RIGHT -> D10
+
+   MOTOR DRIVER:
+   ENA -> D3
+   ENB -> D9
+
+   IN1 -> D4
+   IN2 -> D5
+
+   IN3 -> D6
+   IN4 -> D7
+
+   LOGIC:
+
+   BOTH LIGHT  -> FORWARD
+   LEFT LIGHT  -> LEFT
+   RIGHT LIGHT -> RIGHT
+   NO LIGHT    -> STOP
+
+   IMPORTANT:
+   ENA controls LEFT SIDE motors
+   ENB controls RIGHT SIDE motors
+
+   So if you have 4 motors:
+
+   LEFT FRONT  + LEFT REAR  -> ENA / IN1 / IN2
+   RIGHT FRONT + RIGHT REAR -> ENB / IN3 / IN4
 */
 
-// ---------------- SENSOR PINS ----------------
-#define LDR_LEFT   2
-#define LDR_RIGHT  12
 
-// ---------------- MOTOR DRIVER ----------------
-#define ENA 6
-#define ENB 5
-#define IN1 10
-#define IN2 9
-#define IN3 8
+// ============================================================
+//                       SENSOR PINS
+// ============================================================
+
+#define LDR_LEFT   12
+#define LDR_RIGHT  10
+
+
+// ============================================================
+//                       MOTOR PINS
+// ============================================================
+
+#define ENA 3
+#define ENB 9
+
+#define IN1 4
+#define IN2 5
+
+#define IN3 6
 #define IN4 7
 
-// ---------------- PARAMETERS ----------------
-int baseSpeed = 120;
 
-// PID Tuning
-float Kp = 15;
-float Kd = 8;
-float Ki = 0;
+// ============================================================
+//                       SPEED SETTINGS
+// ============================================================
+
+int baseSpeed = 160;
+
+int turnSpeed = 180;
+
+int slowSpeed = 70;
+
+int maxSpeed = 220;
+
+
+// ============================================================
+//                       PID SETTINGS
+// ============================================================
+
+float Kp = 35.0;
+float Ki = 0.0;
+float Kd = 15.0;
 
 int error = 0;
 int previousError = 0;
-int integral = 0;
-int correction = 0;
 
-// ---------------- SETUP ----------------
+float integral = 0;
+
+float correction = 0;
+
+
+// ============================================================
+//                           SETUP
+// ============================================================
+
 void setup() {
 
+  // Sensors
   pinMode(LDR_LEFT, INPUT);
   pinMode(LDR_RIGHT, INPUT);
 
+  // Motor enable pins
   pinMode(ENA, OUTPUT);
   pinMode(ENB, OUTPUT);
 
+  // Motor direction pins
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
+
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
 
   Serial.begin(9600);
-  Serial.println("LIGHT FOLLOWER STARTED");
+
+  stopBot();
+
+  Serial.println();
+  Serial.println("==============================");
+  Serial.println(" 4-WHEEL LIGHT FOLLOWER");
+  Serial.println("==============================");
 }
 
-// ---------------- LOOP ----------------
+
+// ============================================================
+//                            LOOP
+// ============================================================
+
 void loop() {
 
-  int leftVal  = digitalRead(LDR_LEFT);
-  int rightVal = digitalRead(LDR_RIGHT);
+  // Read sensors
 
-  bool leftLight  = (leftVal == LOW);
-  bool rightLight = (rightVal == LOW);
+  int leftSensor = digitalRead(LDR_LEFT);
+  int rightSensor = digitalRead(LDR_RIGHT);
 
-  // -------- ERROR CALCULATION --------
-  if(leftLight && rightLight)
-    error = 0;       // straight
 
-  else if(leftLight && !rightLight)
-    error = -1;      // turn left
+  /*
+     LM393 normally gives:
 
-  else if(!leftLight && rightLight)
-    error = +1;      // turn right
+     LOW  = light detected
+     HIGH = no light
 
-  else
-  {
-    stopBot();       // no light detected
-    return;
+     If your sensor works opposite,
+     change LOW to HIGH.
+  */
+
+  bool leftLight = (leftSensor == LOW);
+  bool rightLight = (rightSensor == LOW);
+
+
+  // ==========================================================
+  //                    BOTH DETECT LIGHT
+  // ==========================================================
+
+  if (leftLight && rightLight) {
+
+    error = 0;
+
+    integral += error;
+
+    integral = constrain(integral, -20, 20);
+
+    int derivative = error - previousError;
+
+    correction =
+      (Kp * error) +
+      (Ki * integral) +
+      (Kd * derivative);
+
+    previousError = error;
+
+
+    int leftSpeed =
+      baseSpeed + correction;
+
+    int rightSpeed =
+      baseSpeed - correction;
+
+
+    leftSpeed =
+      constrain(leftSpeed, 0, maxSpeed);
+
+    rightSpeed =
+      constrain(rightSpeed, 0, maxSpeed);
+
+
+    moveForward(leftSpeed, rightSpeed);
+
+    Serial.println("FORWARD");
   }
 
-  // -------- PID CONTROL --------
-  integral += error;
-  int derivative = error - previousError;
 
-  correction = (Kp * error) + (Kd * derivative) + (Ki * integral);
+  // ==========================================================
+  //                    LEFT SENSOR ONLY
+  // ==========================================================
 
-  previousError = error;
+  else if (leftLight && !rightLight) {
 
-  int leftSpeed  = baseSpeed + correction;
-  int rightSpeed = baseSpeed - correction;
+    error = -1;
 
-  // Safety limits
-  leftSpeed  = constrain(leftSpeed, 80, 200);
-  rightSpeed = constrain(rightSpeed, 80, 200);
+    integral += error;
 
-  moveForward(leftSpeed, rightSpeed);
+    integral = constrain(integral, -20, 20);
 
-  // Debug
-  Serial.print("Error: "); Serial.print(error);
-  Serial.print("  L: "); Serial.print(leftSpeed);
-  Serial.print("  R: "); Serial.println(rightSpeed);
+    int derivative = error - previousError;
 
-  delay(20);
+    correction =
+      (Kp * error) +
+      (Ki * integral) +
+      (Kd * derivative);
+
+    previousError = error;
+
+
+    /*
+       PROPER 4-WHEEL LEFT TURN
+
+       LEFT SIDE:
+       Both left wheels move backward slowly
+
+       RIGHT SIDE:
+       Both right wheels move forward
+
+       Therefore ALL FOUR WHEELS rotate.
+    */
+
+    turnLeft();
+
+    Serial.println("LEFT - 4 WHEELS");
+  }
+
+
+  // ==========================================================
+  //                    RIGHT SENSOR ONLY
+  // ==========================================================
+
+  else if (!leftLight && rightLight) {
+
+    error = 1;
+
+    integral += error;
+
+    integral = constrain(integral, -20, 20);
+
+    int derivative = error - previousError;
+
+    correction =
+      (Kp * error) +
+      (Kd * derivative) +
+      (Ki * integral);
+
+    previousError = error;
+
+
+    /*
+       PROPER 4-WHEEL RIGHT TURN
+
+       LEFT SIDE:
+       Both left wheels move forward
+
+       RIGHT SIDE:
+       Both right wheels move backward slowly
+
+       ALL FOUR WHEELS ROTATE.
+    */
+
+    turnRight();
+
+    Serial.println("RIGHT - 4 WHEELS");
+  }
+
+
+  // ==========================================================
+  //                     NO LIGHT
+  // ==========================================================
+
+  else {
+
+    integral = 0;
+
+    stopBot();
+
+    Serial.println("STOP");
+  }
+
+
+  delay(15);
 }
 
-// ---------------- MOTOR CONTROL ----------------
+
+// ============================================================
+//                    FORWARD - 4 WHEELS
+// ============================================================
+
 void moveForward(int leftSpeed, int rightSpeed) {
 
+  // ---------------- LEFT SIDE ----------------
+
+  // Left front + left rear
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+
   analogWrite(ENA, leftSpeed);
+
+
+  // ---------------- RIGHT SIDE ----------------
+
+  // Right front + right rear
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+
   analogWrite(ENB, rightSpeed);
+}
+
+
+// ============================================================
+//                    LEFT TURN - 4 WHEELS
+// ============================================================
+
+void turnLeft() {
+
+  /*
+       LEFT SIDE
+       Both wheels BACKWARD
+
+             ← LEFT FRONT
+             ← LEFT REAR
+
+
+       RIGHT SIDE
+       Both wheels FORWARD
+
+             → RIGHT FRONT
+             → RIGHT REAR
+
+       Robot rotates LEFT.
+  */
+
+
+  // LEFT TWO WHEELS BACKWARD
+
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+
+  analogWrite(ENA, turnSpeed);
+
+
+  // RIGHT TWO WHEELS FORWARD
+
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+
+  analogWrite(ENB, turnSpeed);
+}
+
+
+// ============================================================
+//                    RIGHT TURN - 4 WHEELS
+// ============================================================
+
+void turnRight() {
+
+  /*
+       LEFT SIDE
+       Both wheels FORWARD
+
+             → LEFT FRONT
+             → LEFT REAR
+
+
+       RIGHT SIDE
+       Both wheels BACKWARD
+
+             ← RIGHT FRONT
+             ← RIGHT REAR
+
+       Robot rotates RIGHT.
+  */
+
+
+  // LEFT TWO WHEELS FORWARD
 
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
 
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
+  analogWrite(ENA, turnSpeed);
+
+
+  // RIGHT TWO WHEELS BACKWARD
+
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+
+  analogWrite(ENB, turnSpeed);
 }
+
+
+// ============================================================
+//                         STOP
+// ============================================================
 
 void stopBot() {
 
   analogWrite(ENA, 0);
   analogWrite(ENB, 0);
 
+
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, LOW);
+
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, LOW);
 }
