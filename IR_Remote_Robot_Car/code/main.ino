@@ -15,20 +15,20 @@
 #define CMD_4       0x44
 #define CMD_5       0x40
 #define CMD_6       0x43
-#define CMD_7       0x07
+#define CMD_7       0x7
 #define CMD_8       0x15
 #define CMD_9       0x09
 #define CMD_0       0x19
 #define CMD_STAR    0x16
-#define CMD_HASH    0x0D
+#define CMD_HASH    0xD
 #define CMD_FORWARD 0x18
 #define CMD_BACK    0x52
 #define CMD_RIGHT   0x5A
-#define CMD_LEFT    0x08
+#define CMD_LEFT    0x8
 #define CMD_OK      0x1C
 
 const unsigned long MOVE_TIME = 500;
-const unsigned long ROTATION_TIME = 800;
+const unsigned long ROTATION_TIME = 1600;
 const unsigned long PWM_PERIOD = 2000;
 
 byte speedLevel = 5;
