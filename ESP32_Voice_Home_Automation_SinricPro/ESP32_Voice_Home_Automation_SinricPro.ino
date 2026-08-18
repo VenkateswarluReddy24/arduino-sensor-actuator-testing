@@ -3,6 +3,7 @@
 
 #include "SinricPro.h"
 #include "SinricProSwitch.h"
+#include "config.h"
 
 // ============================================================
 // ESP32 VOICE HOME AUTOMATION
@@ -11,21 +12,6 @@
 
 #define LED_PIN 2
 #define BAUD_RATE 115200
-
-// ------------------------------------------------------------
-// WIFI CONFIGURATION
-// ------------------------------------------------------------
-// Replace these placeholders with your local Wi-Fi details.
-#define WIFI_SSID "YOUR_WIFI_NAME"
-#define WIFI_PASS "YOUR_WIFI_PASSWORD"
-
-// ------------------------------------------------------------
-// SINRICPRO CONFIGURATION
-// ------------------------------------------------------------
-// Never publish real credentials to GitHub.
-#define APP_KEY    "YOUR_APP_KEY"
-#define APP_SECRET "YOUR_APP_SECRET"
-#define SWITCH_ID  "YOUR_DEVICE_ID"
 
 bool ledState = false;
 
