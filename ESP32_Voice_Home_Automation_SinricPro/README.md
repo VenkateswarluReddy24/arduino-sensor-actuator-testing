@@ -1,25 +1,26 @@
 # 🎙️ ESP32 Voice Home Automation — SinricPro + Google Home
 
-> A compact smart-home demonstration using an **ESP32 + one LED**, controlled by natural voice through **Google Home** and **SinricPro**.
+> A portfolio-ready IoT demonstration that turns a single LED into a cloud-connected smart-home actuator using **ESP32 + SinricPro + Google Home**.
 
 [![Platform](https://img.shields.io/badge/Platform-ESP32-blue?style=flat-square)](https://www.espressif.com/en/products/socs/esp32)
 [![Framework](https://img.shields.io/badge/Framework-Arduino-orange?style=flat-square)](https://www.arduino.cc/)
 [![IoT](https://img.shields.io/badge/IoT-SinricPro-6f42c1?style=flat-square)](https://sinric.pro/)
 [![Voice](https://img.shields.io/badge/Voice-Google%20Home-red?style=flat-square)](https://www.google.com/home/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-## 🚀 Project Overview
+## 🚀 Project Snapshot
 
-This project turns a single LED into a simple cloud-connected smart-home device.
-
-Speak a command such as:
+Speak:
 
 > **“Hey Google, turn on Demo Light.”**
 
-Google Home sends the smart-home command through SinricPro, the ESP32 receives the command over Wi-Fi, and GPIO 2 drives the LED.
+Google Assistant interprets the command, Google Home routes the smart-home request through SinricPro, the ESP32 receives the power-state callback over Wi-Fi, and GPIO 2 drives the LED.
 
-The design intentionally uses a **single low-voltage LED actuator** so it is easy to demonstrate in a classroom, STEM lab, science fair, or IoT presentation without working with mains electricity.
+This intentionally small build demonstrates a real IoT control chain without mains electricity:
 
-## 🧠 Architecture
+**Natural language → cloud smart-home service → Wi-Fi device → embedded callback → physical actuator**
+
+## 🧠 System Architecture
 
 ```text
                 YOUR VOICE
@@ -45,39 +46,38 @@ The design intentionally uses a **single low-voltage LED actuator** so it is eas
                    LED
 ```
 
-### What each layer does
-
 | Layer | Responsibility |
 |---|---|
-| Google Assistant | Speech recognition and natural-language smart-home command |
+| Google Assistant | Speech recognition + natural-language command |
 | Google Home | Smart-home device integration |
-| SinricPro | Cloud IoT bridge between assistant/app and ESP32 |
-| ESP32 | Wi-Fi connectivity, command callback, device logic |
+| SinricPro | Cloud IoT bridge + device control |
+| ESP32 | Wi-Fi client + embedded device logic |
 | GPIO 2 | Digital actuator output |
-| LED | Physical demonstration load |
+| LED | Low-voltage physical load |
 
-## ✨ Features
+## ✨ Engineering Features
 
 - 🎙️ Natural voice ON/OFF control
-- ☁️ SinricPro IoT integration
+- ☁️ SinricPro cloud integration
 - 🏠 Google Home integration
-- 📱 SinricPro app backup control
-- 💡 Single LED actuator
-- 🔌 GPIO 2 output
+- 📱 SinricPro app as a presentation backup
+- 💡 Single LED actuator on GPIO 2
 - 🔄 Wi-Fi auto-reconnect handling
-- 🧪 Safe low-voltage classroom demonstration
-- 📟 Serial diagnostics for Wi-Fi, cloud state, commands, LED state, and free heap
-- 🧩 Minimal firmware with no unnecessary web server or WebSocket layer
+- 🛡️ Safe startup with LED OFF
+- 📟 Serial diagnostics for network/cloud/device state
+- 🧠 Small, understandable embedded firmware
+- 🔐 Local credentials separated from source code
+- 📦 No unnecessary web server/WebSocket layer
 
 ## 🛠️ Hardware
 
-| Component | Quantity |
-|---|---:|
-| ESP32 Dev Module | 1 |
-| LED | 1 |
-| 220Ω resistor | 1 |
-| Jumper wires | 2–3 |
-| USB cable | 1 |
+| Component | Qty | Purpose |
+|---|---:|---|
+| ESP32 Dev Module | 1 | IoT controller |
+| LED | 1 | Demonstration actuator |
+| 220Ω resistor | 1 | LED current limiting |
+| Jumper wires | 2–3 | Connections |
+| USB cable | 1 | Programming + power |
 
 ### Wiring
 
@@ -85,65 +85,81 @@ The design intentionally uses a **single low-voltage LED actuator** so it is eas
 ESP32 GPIO 2
      │
      ▼
-   220Ω
- resistor
+   220Ω resistor
      │
      ▼
- LED Anode (+)
- LED Cathode (-)
+ LED anode (+)
+ LED cathode (-)
      │
      ▼
     GND
 ```
 
-Some ESP32 Dev Modules also provide an onboard LED on GPIO 2, so the external LED can be omitted for a quick test when supported by the board.
+Some ESP32 boards expose an onboard LED on GPIO 2, allowing a quick hardware test without the external LED.
 
-## 🧰 Software Requirements
+## 💻 Software Stack
 
 - Arduino IDE
-- ESP32 board package for Arduino IDE
+- ESP32 board package by Espressif Systems
 - SinricPro Arduino library
 - SinricPro account
 - Google Home app
 - Internet-connected Wi-Fi
 
-## 📦 Arduino IDE Setup
+## 📁 Project Structure
 
-1. Install the **ESP32 by Espressif Systems** board package.
-2. Select **ESP32 Dev Module**.
-3. Open **Library Manager** and install **SinricPro**.
-4. Open `ESP32_Voice_Home_Automation_SinricPro.ino`.
-
-## 🔐 Credentials
-
-Open the sketch and replace only these placeholders:
-
-```cpp
-#define WIFI_SSID     "YOUR_WIFI_NAME"
-#define WIFI_PASS     "YOUR_WIFI_PASSWORD"
-#define APP_KEY       "YOUR_APP_KEY"
-#define APP_SECRET    "YOUR_APP_SECRET"
-#define SWITCH_ID     "YOUR_DEVICE_ID"
+```text
+ESP32_Voice_Home_Automation_SinricPro/
+├── ESP32_Voice_Home_Automation_SinricPro.ino
+├── config.example.h
+├── .gitignore
+├── LICENSE
+└── README.md
 ```
 
-### Security rule
+## ⚙️ Arduino IDE Setup
 
-**Do not commit real Wi-Fi passwords, SinricPro App Keys, App Secrets, or Device IDs to a public repository.**
+1. Install **Arduino IDE**.
+2. Install **ESP32 by Espressif Systems** through Boards Manager.
+3. Select **ESP32 Dev Module**.
+4. Open Library Manager and install **SinricPro**.
+5. Copy the credential template:
 
-The repository intentionally contains placeholders only.
+```text
+config.example.h → config.h
+```
 
-## ☁️ SinricPro Setup
+6. Edit `config.h` on your computer and enter your Wi-Fi/SinricPro credentials.
+7. Upload `ESP32_Voice_Home_Automation_SinricPro.ino`.
 
-1. Create/sign in to a SinricPro account.
-2. Create a new **Switch** device.
-3. Use a simple device name such as:
-   - `Demo Light`
-   - `Smart Light`
-4. Copy the generated Device ID.
+`config.h` is deliberately ignored by Git so credentials are not published.
+
+## 🔐 Credentials & Security
+
+The tracked repository contains only placeholders in `config.example.h`.
+
+Your local `config.h` must contain:
+
+```cpp
+#define WIFI_SSID   "YOUR_WIFI_NAME"
+#define WIFI_PASS   "YOUR_WIFI_PASSWORD"
+#define APP_KEY     "YOUR_SINRICPRO_APP_KEY"
+#define APP_SECRET  "YOUR_SINRICPRO_APP_SECRET"
+#define SWITCH_ID   "YOUR_SINRICPRO_DEVICE_ID"
+```
+
+**Never commit real Wi-Fi passwords, SinricPro App Keys, App Secrets, or private device identifiers to a public repository.**
+
+## ☁️ SinricPro Device Setup
+
+1. Create/sign in to your SinricPro account.
+2. Create one **Switch** device.
+3. Use a simple device name such as **Demo Light**.
+4. Copy the Device ID.
 5. Copy your App Key and App Secret.
-6. Put those values into the Arduino sketch locally.
+6. Place those values only in local `config.h`.
 
-For a one-device classroom demo, the free SinricPro tier is sufficient.
+For this one-device classroom demo, the free tier is sufficient.
 
 ## 🏠 Google Home Setup
 
@@ -158,29 +174,46 @@ Add
 → Discover devices
 ```
 
-Add the discovered device to a room and keep the device name simple.
+Assign the device to a room and keep the device name short.
 
-Recommended:
+Recommended name:
 
 > **Demo Light**
 
-Then test:
+Voice tests:
 
-> **“Hey Google, turn on Demo Light.”**
+> “Hey Google, turn on Demo Light.”
 
-and:
+> “Hey Google, turn off Demo Light.”
 
-> **“Hey Google, turn off Demo Light.”**
+## 🔌 Firmware Logic
 
-## 🧪 Expected Serial Monitor Flow
+The main firmware performs five jobs:
 
-At startup:
+1. Initialize GPIO 2 safely with the LED OFF.
+2. Connect the ESP32 to a normal Wi-Fi network.
+3. Authenticate with SinricPro.
+4. Receive the Power State callback.
+5. Drive GPIO 2 HIGH/LOW and report the result through Serial Monitor.
+
+The central callback is:
+
+```cpp
+bool onPowerState(const String &deviceId, bool &state)
+```
+
+`state == true` turns the LED ON; `state == false` turns it OFF.
+
+## 🧪 Expected Serial Monitor
+
+Use **115200 baud**.
+
+Startup should look similar to:
 
 ```text
 ========================================
       ESP32 VOICE HOME AUTOMATION
 ========================================
-
 LED STATE: OFF
 Hardware initialized.
 GPIO 2 LED = OFF
@@ -197,7 +230,7 @@ Connected to SinricPro.
 Cloud connection: ONLINE
 ```
 
-After a voice command:
+After a command:
 
 ```text
 --------------------------------
@@ -209,51 +242,82 @@ Free heap: <value>
 --------------------------------
 ```
 
-## 🎬 Presentation Demo Flow
+## 🎬 Presentation Flow
 
-### Demo 1 — Voice control
+### 1. Show the hardware
+
+Point out:
+
+- ESP32 controller
+- GPIO 2
+- 220Ω resistor
+- LED actuator
+
+### 2. Demonstrate voice control
 
 Say:
 
-> “Hey Google, turn on Demo Light.”
+> **“Hey Google, turn on Demo Light.”**
 
-The LED turns ON.
+LED → **ON**
 
-Then say:
+Then:
 
-> “Hey Google, turn off Demo Light.”
+> **“Hey Google, turn off Demo Light.”**
 
-The LED turns OFF.
+LED → **OFF**
 
-### Demo 2 — App control backup
+### 3. Show the cloud-to-device path
 
-Open SinricPro and toggle **Demo Light** directly.
+Explain:
 
-This gives you a reliable backup if voice recognition or the microphone is unavailable during the presentation.
+```text
+Voice
+ ↓
+Google Assistant
+ ↓
+Google Home
+ ↓
+SinricPro
+ ↓
+Wi-Fi
+ ↓
+ESP32
+ ↓
+GPIO 2
+ ↓
+LED
+```
 
-## ⚠️ Important Architecture Note
+### 4. Demonstrate the backup
 
-This version **does not use the ESP32 as an isolated Wi-Fi Access Point**.
+Open the SinricPro app and toggle **Demo Light** directly.
 
-That is intentional.
+This gives you a second control path if voice recognition is unavailable during the presentation.
 
-SinricPro and Google Home require the ESP32 to reach the internet. The final communication path is:
+## ⚠️ Important Architecture Limitation
+
+This version intentionally **does not use the ESP32 as an isolated Wi-Fi Access Point**.
+
+SinricPro and Google Home require the ESP32 to reach the internet.
+
+The control path is:
 
 ```text
 ESP32 → Internet → SinricPro → Google Home
 ```
 
-The LED control itself is still performed locally by the ESP32 on GPIO 2 once the command reaches the device.
+The physical actuator remains directly controlled by the ESP32 after the command reaches the device.
 
 ## 🔍 Troubleshooting
 
 ### ESP32 does not connect to Wi-Fi
 
-Check the `WIFI_SSID` and `WIFI_PASS` values and make sure the network has internet access.
+Check `WIFI_SSID` and `WIFI_PASS` in local `config.h`. Confirm that the network has internet access.
 
 ### SinricPro does not connect
 
-Check all three values:
+Verify:
 
 ```text
 APP_KEY
@@ -261,7 +325,7 @@ APP_SECRET
 SWITCH_ID
 ```
 
-They must belong to the correct SinricPro account/device.
+All three must belong to the correct SinricPro account/device.
 
 ### Google Home cannot find the device
 
@@ -274,53 +338,53 @@ Google Home
 → Works with Google Home
 ```
 
-Then run device discovery again.
+Then run discovery again.
 
 ### Serial says LED ON but the LED stays dark
 
-Check the wiring:
+Check:
 
 ```text
 GPIO 2 → 220Ω → LED anode
 LED cathode → GND
 ```
 
-Also test the onboard GPIO 2 LED if your ESP32 board provides one.
-
 ### Voice command is unreliable
 
-Use a short device name such as **Demo Light** and commands such as:
+Use a simple device name such as **Demo Light** and short commands:
 
 > “Turn on Demo Light.”
 
 > “Turn off Demo Light.”
 
-## 🔒 Safety
+## 🛡️ Safety
 
-This project uses a single LED and is intended as a low-voltage STEM demonstration.
+This repository uses a single LED and is intended for low-voltage STEM/IoT demonstration.
 
-Do **not** connect mains AC directly to GPIO 2.
+**Do not connect mains AC directly to ESP32 GPIO.**
 
-For future home-automation expansion, use an appropriately rated, isolated relay module and follow electrical safety requirements.
+For future home-automation expansion, use an appropriately rated isolated relay module and follow electrical safety practices.
 
-## 📁 Project Structure
+## 📌 Portfolio Value
 
-```text
-ESP32_Voice_Home_Automation_SinricPro/
-├── ESP32_Voice_Home_Automation_SinricPro.ino
-└── README.md
-```
+Although the actuator is only one LED, the project demonstrates several industry-relevant layers:
+
+- Embedded C/C++ firmware
+- ESP32 Wi-Fi networking
+- Cloud IoT integration
+- Smart-home device abstraction
+- Event-driven callbacks
+- State synchronization
+- Fault recovery through Wi-Fi reconnect
+- Secure handling of development credentials
+
+This makes the project useful as a compact demonstration of how an embedded device becomes part of a modern IoT ecosystem.
 
 ## 👨‍💻 Author
 
-**Venkateswarlu Reddy Bakka**
-
+**Venkateswarlu Reddy Bakka**  
 Robotics • Embedded Systems • IoT • STEM Education
 
----
+## 📄 License
 
-### ⭐ Why this project matters
-
-This is a small hardware build, but it demonstrates a real IoT control chain:
-
-**Natural language → cloud smart-home service → Wi-Fi device → embedded callback → physical actuator.**
+MIT License — see [LICENSE](LICENSE).
