@@ -1,0 +1,15 @@
+# Local credentials
+config.h
+
+# Arduino IDE generated files
+*.ino.bin
+*.ino.elf
+*.hex
+build/
+.cache/
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
