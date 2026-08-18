@@ -378,8 +378,6 @@ Although the actuator is only one LED, the project demonstrates several industry
 - Fault recovery through Wi-Fi reconnect
 - Secure handling of development credentials
 
-This makes the project useful as a compact demonstration of how an embedded device becomes part of a modern IoT ecosystem.
-
 ## 👨‍💻 Author
 
 **Venkateswarlu Reddy Bakka**  
