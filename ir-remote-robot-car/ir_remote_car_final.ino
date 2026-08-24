@@ -36,8 +36,8 @@
 
 #define CMD_FORWARD 0x18
 #define CMD_BACK    0x52
-#define CMD_RIGHT   0x5A
-#define CMD_LEFT    0x8
+#define CMD_RIGHT   0x8
+#define CMD_LEFT    0x5A
 
 #define CMD_OK      0x1C
 
@@ -206,7 +206,7 @@ void Backward()
 // 360 DEGREE SPIN
 // =====================================================
 
-const unsigned long ROTATION_TIME = 1600;
+const unsigned long ROTATION_TIME = 1000;
 
 void Rotate360()
 {
